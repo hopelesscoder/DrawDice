@@ -6,11 +6,14 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+
+
+
     <com.example.daniele.drawdice.SingleTouchEventView
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:id="@+id/drawing"
         />
@@ -93,11 +96,30 @@
                 android:id="@+id/buttonUndo" />
 
             <Button
-                android:text="Redo"
+                android:text="redo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:id="@+id/buttonRedo" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <Button
+                android:text="Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/buttonText" />
+
+            <Button
+                android:text="Text on path"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/buttonOnPath" />
         </TableRow>
 
         <TableRow

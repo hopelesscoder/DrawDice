@@ -10,15 +10,20 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Random;
 import java.util.UUID;
@@ -34,7 +39,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     Button buttonNew;
     Button buttonSetBackground;
     Button buttonUndo;
-
+    Button buttonText;
+    Button buttonOnPath;
 
 
     TextView textView1;
@@ -46,6 +52,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     Button buttonGreen;
 
     Dialog writeDialog;
+
+
 
 
 
@@ -70,7 +78,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             buttonSetBackground = (Button) findViewById(R.id.buttonSetBackground);
             buttonSetBackground.setOnClickListener(this);
             buttonUndo = (Button) findViewById(R.id.buttonUndo);
-            buttonSave.setOnClickListener(this);
+            buttonText = (Button) findViewById(R.id.buttonText);
+            buttonText.setOnClickListener(this);
+            buttonOnPath = (Button) findViewById(R.id.buttonOnPath);
+            buttonOnPath.setOnClickListener(this);
+
 
 
             if(savedInstanceState == null){
@@ -118,14 +130,29 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             textView1.setText(""+res);
         }else if ((Button) v == buttonSave){
             AlertDialog.Builder saveDialog = new AlertDialog.Builder(this);
+            //saveDialog.setView(R.layout.image_name);
+            final EditText textImage = new EditText(this);
+            textImage.setHint("Name of the drawing");
+            saveDialog.setView(textImage);
             saveDialog.setTitle("Save drawing");
             saveDialog.setMessage("Save drawing to device Gallery?");
+
             saveDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
                 public void onClick(DialogInterface dialog, int which){
                     //save drawing
                     SingleTouchEventView drawFrag = (SingleTouchEventView) findViewById(R.id.drawing);
                     drawFrag.setDrawingCacheEnabled(true);
-                    String imgSaved = MediaStore.Images.Media.insertImage(
+                    String name;
+                    if(textImage.getText().toString().length()>0){
+                        name = textImage.getText().toString().concat(".jpg");
+                    }else{
+                        name = UUID.randomUUID().toString()+".jpg";
+                    }
+                    createDirectoryAndSaveFile(drawFrag.getDrawingCache(),name);
+
+
+
+                    /*String imgSaved = MediaStore.Images.Media.insertImage(
                             getContentResolver(), drawFrag.getDrawingCache(),
                             UUID.randomUUID().toString()+".png", "drawing");
                     if(imgSaved!=null){
@@ -138,9 +165,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                                 "Oops! Image could not be saved.", Toast.LENGTH_SHORT);
                         unsavedToast.show();
                     }
+                    */
                     drawFrag.destroyDrawingCache();
                 }
             });
+
             saveDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
                 public void onClick(DialogInterface dialog, int which){
                     dialog.cancel();
@@ -156,6 +185,69 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }else if ((Button) v == buttonUndo){
             SingleTouchEventView drawFrag = (SingleTouchEventView) findViewById(R.id.drawing);
             drawFrag.undo();
+        }else if ((Button) v == buttonText){
+
+
+            AlertDialog.Builder saveDialog = new AlertDialog.Builder(this);
+            final EditText text = new EditText(this);
+            text.setHint("Text");
+            saveDialog.setView(text);
+            saveDialog.setTitle("Write");
+            saveDialog.setMessage("What do you want to write?");
+
+            saveDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    String name;
+                    if(text.getText().toString().length()>0){
+                        name = text.getText().toString();
+                        SingleTouchEventView drawFrag = (SingleTouchEventView) findViewById(R.id.drawing);
+                        drawFrag.setText(name);
+                    }else{
+                        Toast.makeText(getApplicationContext(),"Wrong text",Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+            saveDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    dialog.cancel();
+                }
+            });
+            saveDialog.show();
+
+
+
+
+        }else if ((Button) v == buttonOnPath){
+
+            AlertDialog.Builder saveDialog = new AlertDialog.Builder(this);
+            final EditText text = new EditText(this);
+            text.setHint("Text");
+            saveDialog.setView(text);
+            saveDialog.setTitle("Write");
+            saveDialog.setMessage("What do you want to write?");
+
+            saveDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    String name;
+                    if(text.getText().toString().length()>0){
+                        name = text.getText().toString();
+                        SingleTouchEventView drawFrag = (SingleTouchEventView) findViewById(R.id.drawing);
+                        drawFrag.setTextOnPath(name);
+                    }else{
+                        Toast.makeText(getApplicationContext(),"Wrong text",Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+            saveDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int which){
+                    dialog.cancel();
+                }
+            });
+            saveDialog.show();
+
+
         }else if ((Button) v == buttonBlue){
             SingleTouchEventView drawFrag = (SingleTouchEventView) findViewById(R.id.drawing);
             drawFrag.write(Color.BLUE);
@@ -229,7 +321,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         outState.putInt("color",drawFrag.getPaint().getColor());
 
 
-
         drawFrag.destroyDrawingCache();
     }
 
@@ -266,5 +357,35 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             }
             //Now you can do whatever you want with your inpustream, save it as file, upload to a server, decode a bitmap...
         }
+    }
+
+
+
+    private void createDirectoryAndSaveFile(Bitmap imageToSave, String fileName) {
+        //String folderPath = Environment.getExternalStorageDirectory() + "/Pictures/drawdice";
+        String folderPath = Environment.getExternalStorageDirectory() + "/DCIM/Drawdice";
+        File folder = new File(folderPath);
+        if (!folder.exists()) {
+            File Directory = new File(folderPath);
+            Directory.mkdirs();
+        }
+        File newFile = new File(folderPath, fileName);
+        try {
+            FileOutputStream out = new FileOutputStream(newFile);
+            imageToSave.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            Uri contentUri = Uri.fromFile(newFile);
+            mediaScanIntent.setData(contentUri);
+            this.sendBroadcast(mediaScanIntent);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
     }
 }

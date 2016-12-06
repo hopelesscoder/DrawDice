@@ -8,14 +8,19 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
+
+import java.util.LinkedList;
 
 public class SingleTouchEventView extends View {
 
     private Paint paint = new Paint();
     private Path path = new Path();
+    private LinkedList<Path> pathList = new LinkedList<Path>();
 
 
     private Canvas drawCanvas;
@@ -23,7 +28,10 @@ public class SingleTouchEventView extends View {
 
 
     private boolean erase = false;
-
+    private boolean isTextOnPath = false;
+    //private boolean isText = false;
+    private String text;
+    private Path onPath= new Path();
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -52,6 +60,19 @@ public class SingleTouchEventView extends View {
 
         canvas.drawBitmap(canvasBitmap, 0, 0, paint);
         drawCanvas.drawPath(path, paint);
+        /*if(isText){
+            Toast.makeText(this.getContext(),"enter",Toast.LENGTH_SHORT).show();
+            Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+            textPaint.setColor(Color.RED);
+            textPaint.setTextSize((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, getResources().getDisplayMetrics()));
+            textPaint.setTextAlign(Paint.Align.LEFT);
+
+            Paint.FontMetrics metric = textPaint.getFontMetrics();
+            int textHeight = (int) Math.ceil(metric.descent - metric.ascent);
+            int y = (int)(textHeight - metric.descent);
+            canvas.drawText("primo testo fdsfbsòOFABOosfdOÒGDSGDSGDSSAGAAAFSDSDGFSDADG", 0,
+                    y,textPaint);
+        }*/
 
     }
 
@@ -70,7 +91,13 @@ public class SingleTouchEventView extends View {
 
                 //path.reset();
 
-                path.moveTo(eventX, eventY);
+
+                //pathList.addFirst(path);
+                if(isTextOnPath){
+                    onPath.moveTo(eventX,eventY);
+                }else {
+                    path.moveTo(eventX, eventY);
+                }
                 //invalidate();
                 return true;
             case MotionEvent.ACTION_MOVE:
@@ -84,10 +111,14 @@ public class SingleTouchEventView extends View {
                     paint.setXfermode(null);
                     path.reset();
                     path.moveTo(eventX, eventY);
-                }else{
+                }else if (isTextOnPath){
+                    onPath.lineTo(eventX, eventY);
+
+
+                }else {
                     path.lineTo(eventX, eventY);
 
-                }
+                    }
 
 
                 break;
@@ -95,7 +126,22 @@ public class SingleTouchEventView extends View {
                 //drawCanvas.drawPath(path, paint);
                 if(erase) {
                     //path.reset();
-                }else{
+                }else if(isTextOnPath){
+                    onPath.close();
+                    Paint textPaint = new Paint();
+                    textPaint.setColor(Color.RED);
+                    //textPaint.setARGB(200,220,0,0);
+                    //textPaint.setTypeface(Typeface.DEFAULT_BOLD);
+                    textPaint.setTextSize(50);
+                    textPaint.setAntiAlias(true);
+                    textPaint.setDither(true);
+                    drawCanvas.drawTextOnPath(text,onPath,0,0,textPaint);
+                    isTextOnPath=false;
+                    Toast.makeText(this.getContext(),text,Toast.LENGTH_SHORT).show();
+                    onPath.reset();
+
+
+                }else {
                     drawCanvas.drawPath(path, paint);
                     path.reset();
                 }
@@ -117,6 +163,8 @@ public class SingleTouchEventView extends View {
         erase = true;
         //paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
         paint.setStrokeWidth(20);
+        paint.setAntiAlias(true);
+        paint.setDither(true);
     }
 
 
@@ -143,7 +191,34 @@ public class SingleTouchEventView extends View {
     }
 
     public void undo(){
+        this.setPath(pathList.removeFirst());
+    }
 
+    public void setPath(Path oldPath){
+        path = oldPath;
+        invalidate();
+    }
+
+
+    public void setText(String in){
+        //isText=true;
+        //text = in;
+
+        Paint textPaint = new Paint();
+        textPaint.setColor(Color.RED);
+        //textPaint.setARGB(200,220,0,0);
+        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        textPaint.setTextSize(50);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        drawCanvas.drawText(in, drawCanvas.getWidth()/2,
+                drawCanvas.getHeight()/2 - ((textPaint.descent() + textPaint.ascent()) / 2),textPaint);
+
+        invalidate();
+    }
+
+    public void setTextOnPath(String in){
+        text = in;
+        isTextOnPath=true;
     }
 
 

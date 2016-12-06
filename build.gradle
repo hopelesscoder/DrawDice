@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.1"//for 32 bit ubuntu
     defaultConfig {
         applicationId "com.example.daniele.drawdice"
         minSdkVersion 21
@@ -28,4 +28,5 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
     testCompile 'junit:junit:4.12'
+    //compile 'com.android.support:design:24.2.1'
 }
